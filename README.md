@@ -1,75 +1,60 @@
-# React + TypeScript + Vite
+# TechCorp AI Chat
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interface web temps réel pour interagir avec le modèle `Phi-3.5-Financial` déployé par l'équipe Infra. 
 
-Currently, two official plugins are available:
+## Prérequis
+- [Node.js](https://nodejs.org/) installé sur votre machine.
+- Serveur d'inférence démarré (Ollama ou compatible OpenAI).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Lancer le projet
 
-## React Compiler
+1. Installez les dépendances :
+   ```bash
+   npm install
+   ```
+2. Démarrez le serveur de développement Vite :
+   ```bash
+   npm run dev
+   ```
+3. Ouvrez [http://localhost:5173](http://localhost:5173) dans votre navigateur.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Configuration du Backend
 
-## Expanding the ESLint configuration
+L'URL de l'API, le nom du modèle, et le format de la requête sont centralisés dans le fichier `src/config.ts`.
+Aucun ajustement n'est requis par l'utilisateur final ; l'équipe de développement / infra peut ajuster les valeurs via le code ou les variables d'environnement.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+Vous pouvez configurer l'API en créant un fichier `.env` à la racine :
+```env
+VITE_API_URL=http://localhost:11434/v1/chat/completions
+VITE_MODEL_NAME=phi3.5-financial
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Pour basculer d'une API compatible OpenAI à une API Ollama pure (`/api/chat`), passez la variable `isOpenAIFormat` à `false` dans `src/config.ts`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Format de requête attendu (géré par l'application)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+L'application envoie une requête POST contenant l'historique complet (sans flux continu).
 
+**Si `isOpenAIFormat` = true (ex: vLLM, OpenAI, Ollama v1/chat) :**
+```json
+{
+  "model": "phi3.5-financial",
+  "messages": [
+    { "role": "user", "content": "Bonjour !" }
+  ],
+  "stream": false
+}
 ```
+*Réponse attendue :* `data.choices[0].message.content`
+
+**Si `isOpenAIFormat` = false (Ollama pur) :**
+```json
+{
+  "model": "phi3.5-financial",
+  "messages": [
+    { "role": "user", "content": "Bonjour !" }
+  ],
+  "stream": false
+}
+```
+*Réponse attendue :* `data.message.content`
